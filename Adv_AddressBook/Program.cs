@@ -7,10 +7,13 @@ namespace Adv_AddressBook
     public class Program
     {
         static string ConnectionStr = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Addressbook;Integrated Security=SSPI";
-        SqlConnection connection = new SqlConnection(ConnectionStr);
+        static SqlConnection connection = new SqlConnection(ConnectionStr);
         public static void Main(string[] args)
         {
             Console.WriteLine("Welcome to Advance Addressbook Program");
+            Contacts contacts = new Contacts();
+            connection.Open();
+            connection.Close();
         }
     }
 }
