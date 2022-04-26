@@ -8,6 +8,8 @@ namespace Adv_AddressBook
     {
         static string ConnectionStr = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Addressbook;Integrated Security=SSPI";
         static SqlConnection connection = new SqlConnection(ConnectionStr);
+        string SPstr = "";
+
         public static void Main(string[] args)
         {
             Console.WriteLine("Welcome to Advance Addressbook Program");
@@ -19,6 +21,7 @@ namespace Adv_AddressBook
             {
                 Console.WriteLine("Choose an option");
                 Console.WriteLine("1 to Insert in AddressBook");
+                Console.WriteLine("2 to Update details of a contact that already exists");
                 Console.WriteLine("0 to EXIT");
                 option = Convert.ToInt32(Console.ReadLine());
                 switch (option)
@@ -31,6 +34,9 @@ namespace Adv_AddressBook
                             program.InsertContact();
                         }
                         break;
+                    case 2:
+                        program.UpdateDetails();
+                        break;
                     default:
                         break;
                 }
@@ -40,13 +46,20 @@ namespace Adv_AddressBook
         public void InsertContact()
         {
             Contacts contact = new Contacts();
-            Console.WriteLine("\nFill in the details");
+            Console.WriteLine("\nFill in the details,");
+            AddDetails(contact);
+            InsertContact(contact);
+            Console.WriteLine("Contact information for {0} {1} was saved to the database.\n", 
+                contact.FirstName, contact.LastName);
+        }
+        public Contacts AddDetails(Contacts contact)
+        {
             Console.Write("Enter First Name: ");
             contact.FirstName = Console.ReadLine();
             if (contact.FirstName == "")
             {
                 Console.WriteLine("First name can't be empty");
-                return;
+                return contact;
             }
             Console.Write("Enter Last Name: ");
             contact.LastName = Console.ReadLine();
@@ -63,15 +76,17 @@ namespace Adv_AddressBook
             Console.Write("Enter Email: ");
             contact.Email = Console.ReadLine();
             DisplayDetails(contact);
-            InsertContact(contact);
-            Console.WriteLine("Contact information for {0} {1} was saved to the database.\n", 
-                contact.FirstName, contact.LastName);
+            return contact;
         }
         public void InsertContact(Contacts contact)
         {
-            string SPstr = "dbo.InsertContact";
+            SPstr = "dbo.InsertContact";
             SqlCommand cmd = new SqlCommand(SPstr, connection);
             cmd.CommandType = CommandType.StoredProcedure;
+            InsertBasicDetails(cmd, contact);
+        }
+        public void InsertBasicDetails(SqlCommand cmd, Contacts contact)
+        {
             cmd.Parameters.AddWithValue("@FirstName", contact.FirstName);
             cmd.Parameters.AddWithValue("@LastName", contact.LastName);
             cmd.Parameters.AddWithValue("@Address", contact.Address);
@@ -91,6 +106,35 @@ namespace Adv_AddressBook
                 contact.PhoneNumber, contact.Email);
             Console.WriteLine("-------------------------------------------------------\n");
 
+        }
+        public int ContactExists(string FirstName)
+        {
+            SPstr = "dbo.ContactExists";
+            SqlCommand cmd = new SqlCommand(SPstr, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@FirstName", FirstName);
+            var returnValue = cmd.Parameters.Add("@result", SqlDbType.Int);
+            returnValue.Direction = ParameterDirection.ReturnValue;
+            cmd.ExecuteNonQuery();
+            return (int)returnValue.Value;
+        }
+        public void UpdateDetails()
+        {
+            Console.Write("\nEnter the First Name: ");
+            string FirstName = Console.ReadLine();
+            if (ContactExists(FirstName) == 0)
+            {
+                Console.WriteLine("No such contact Exists.\n");
+                return;
+            }
+            Console.WriteLine("Contact Exists, Enter the rest of details,");
+            Contacts contact = new();
+            SPstr = "dbo.UpdateDetails";
+            SqlCommand cmd = new SqlCommand(SPstr, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@OriginalFirstName", FirstName);
+            AddDetails(contact);
+            InsertBasicDetails(cmd, contact);
         }
     }
 }
