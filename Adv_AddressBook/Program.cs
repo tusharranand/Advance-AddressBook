@@ -21,26 +21,34 @@ namespace Adv_AddressBook
             {
                 Console.WriteLine("Choose an option");
                 Console.WriteLine("1 to Insert in AddressBook");
-                Console.WriteLine("2 to Update details of a contact that already exists");
+                Console.WriteLine("2 to Display all Contacts");
+                Console.WriteLine("3 to Update details of a contact that already exists");
+                Console.WriteLine("4 to Delete a contact");
                 Console.WriteLine("0 to EXIT");
                 option = Convert.ToInt32(Console.ReadLine());
                 switch (option)
                 {
                     case 1:
                         Console.Write("Enter the number of contacts you want to enter: ");
-                        int count = Convert.ToInt32(Console.ReadLine());   
+                        int count = Convert.ToInt32(Console.ReadLine());
                         for (int i = 0; i < count; i++)
                         {
                             program.InsertContact();
                         }
                         break;
                     case 2:
+                        program.DisplayAllDetails();
+                        break;
+                    case 3:
                         program.UpdateDetails();
+                        break;
+                    case 4:
+                        program.RemoveContact();
                         break;
                     default:
                         break;
                 }
-            } while (option!=0);
+            } while (option != 0);
             connection.Close();
         }
         public void InsertContact()
@@ -49,7 +57,7 @@ namespace Adv_AddressBook
             Console.WriteLine("\nFill in the details,");
             AddDetails(contact);
             InsertContact(contact);
-            Console.WriteLine("Contact information for {0} {1} was saved to the database.\n", 
+            Console.WriteLine("Contact information for {0} {1} was saved to the database.\n",
                 contact.FirstName, contact.LastName);
         }
         public Contacts AddDetails(Contacts contact)
@@ -97,12 +105,36 @@ namespace Adv_AddressBook
             cmd.Parameters.AddWithValue("@Email", contact.Email);
             cmd.ExecuteNonQuery();
         }
+        public void DisplayAllDetails()
+        {
+            SPstr = "dbo.DisplayAllDetails";
+            SqlCommand cmd = new SqlCommand(SPstr, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    Contacts contact = new Contacts();
+                    contact.FirstName = reader.GetString(0);
+                    contact.LastName = reader.GetString(1);
+                    contact.Address = reader.GetString(2);
+                    contact.City = reader.GetString(3);
+                    contact.State = reader.GetString(4);
+                    contact.ZipCode = reader.GetString(5);
+                    contact.PhoneNumber = reader.GetString(6);
+                    contact.Email = reader.GetString(7);
+                    DisplayDetails(contact);
+                }
+            }
+
+        }
         public void DisplayDetails(Contacts contact)
         {
             Console.WriteLine("\n-------------------------------------------------------");
             Console.WriteLine("The details for {0} {1} are:\nAddress: {2}\nCity: {3}\nState: " +
-                "{4}\nZip Code: {5}\nPhone Number: {6}\nEmail: {7}", contact.FirstName, 
-                contact.LastName, contact.Address, contact.City, contact.State, contact.ZipCode, 
+                "{4}\nZip Code: {5}\nPhone Number: {6}\nEmail: {7}", contact.FirstName,
+                contact.LastName, contact.Address, contact.City, contact.State, contact.ZipCode,
                 contact.PhoneNumber, contact.Email);
             Console.WriteLine("-------------------------------------------------------\n");
 
@@ -135,6 +167,23 @@ namespace Adv_AddressBook
             cmd.Parameters.AddWithValue("@OriginalFirstName", FirstName);
             AddDetails(contact);
             InsertBasicDetails(cmd, contact);
+        }
+        public void RemoveContact()
+        {
+            Console.Write("\nEnter the First Name: ");
+            string FirstName = Console.ReadLine();
+            if (ContactExists(FirstName) == 0)
+            {
+                Console.WriteLine("No such contact Exists.\n");
+                return;
+            }
+            Console.WriteLine("Contact Exists.");
+            SPstr = "dbo.RemoveContact";
+            SqlCommand cmd = new SqlCommand(SPstr, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@FirstName", FirstName);
+            cmd.ExecuteNonQuery();
+            Console.WriteLine("Contact with first name, {0} was deleted.\n", FirstName);
         }
     }
 }

@@ -13,3 +13,5 @@ Email varchar(50)
 
 select * from Family
 truncate table Family
+delete from Family where FirstName = 'Tushar'
+exec dbo.ContactExists 'Tushar'
