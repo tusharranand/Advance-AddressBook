@@ -25,6 +25,7 @@ namespace Adv_AddressBook
                 Console.WriteLine("3 to Update details of a contact that already exists");
                 Console.WriteLine("4 to Delete a contact");
                 Console.WriteLine("5 to Get contacts by city or state");
+                Console.WriteLine("6 to Get the size of AddressBook by City and State");
                 Console.WriteLine("0 to EXIT");
                 option = Convert.ToInt32(Console.ReadLine());
                 switch (option)
@@ -53,6 +54,11 @@ namespace Adv_AddressBook
                             contact = program.GetDetailsForAName(name);
                             program.DisplayDetails(contact);
                         }
+                        break;
+                    case 6:
+                        int[] Count = program.GetSizeByCityAndState();
+                        Console.WriteLine("\nThe number of cities and states in the AddressBook " +
+                            "are:\nCities = {0}\nStates = {1}\n", Count[0], Count[1]);
                         break;
                     default:
                         break;
@@ -247,6 +253,29 @@ namespace Adv_AddressBook
             }
             reader.Close();
             return FirstNames;
+        }
+        public int[] GetSizeByCityAndState()
+        {
+            List<string> Cities = new();
+            List<string> States = new();
+            SPstr = "dbo.CitesAndStatesCount";
+            SqlCommand cmd = new SqlCommand(SPstr, connection);
+            cmd.CommandType = CommandType.StoredProcedure;
+            SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    string City = reader.GetString(0);
+                    string State = reader.GetString(1);
+                    Cities.Add(City);
+                    if (!States.Contains(State))
+                        States.Add(State);
+                }
+            }
+            reader.Close();
+            int[] Count = new int[] {Cities.Count, States.Count};
+            return Count;
         }
     }
 }

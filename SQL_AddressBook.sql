@@ -15,3 +15,5 @@ select * from Family
 truncate table Family
 delete from Family where FirstName = 'Tushar'
 exec dbo.ContactExists 'Tushar'
+select distinct City, State from Family
+exec dbo.ContactsByCityOrState 'Uttar Pradesh', 1
